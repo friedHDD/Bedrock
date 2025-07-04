@@ -1,10 +1,12 @@
 <script setup>
-import { ref, watch } from 'vue'
+import {computed, ref, watch} from 'vue'
 import axios from 'axios'
-import router from "@/router.js";
 
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
+import Button from 'primevue/button';
+import Chip from 'primevue/chip';
+import Breadcrumb from 'primevue/breadcrumb';
 
 const props = defineProps({
   path: {
@@ -15,24 +17,28 @@ const props = defineProps({
 })
 
 const files = ref([])
+
 const getFolderLink = (fileName) => {
-  if (props.path && !props.path.endsWith('/')) {
-    return `/files/${props.path}/${fileName}/`
+  if (props.path && !props.path.endsWith('/')){
+    return `/files${props.path}/${fileName}/`
   }
-  // 否则直接拼接 (处理 props.path 为空或'~/'的情况)
-  return `/files/${props.path}${fileName}/`
+  return `/files${props.path}${fileName}/`
 }
-watch(
+
+const breadcrumbItems = computed(() => {
+  const segments = props.path.split('/').filter(Boolean); // 分割并移除空项
+  let currentPath = '';
+  return segments.map(segment => {
+    currentPath = currentPath ? `${currentPath}/${segment}` : segment;
+    return {
+      label: segment,
+    };
+  });
+})
+
+watch(//events after the path changed
   () => props.path,
   (newPath) => {
-    // 如果路径为空，则使用 '~'
-    if(newPath === '') {
-      router.replace('/files/~/')//automatic go to ~/
-      return
-    }
-
-
-
     axios.get(`/api/list?folder=${newPath}`)
       .then(response => {
         files.value = response.data
@@ -47,8 +53,9 @@ watch(
 </script>
 
 <template>
-
-  {{props.path}}
+  <div class="card flex justify-center">
+    <Breadcrumb :model="breadcrumbItems" />
+  </div>
 
   <DataTable :value="files" tableStyle="min-width: 50rem">
 
@@ -56,15 +63,19 @@ watch(
       <template #body="slotProps">
         <!-- 文件夹 -->
         <router-link :to="getFolderLink(slotProps.data.name)" v-if="slotProps.data.type === 'folder'">
-          {{ slotProps.data.name }}
+          <Button :label="slotProps.data.name" severity="secondary" variant="text" />
         </router-link>
         <!-- 文件 -->
-        <span v-else>{{ slotProps.data.name }}</span>
+        <Button v-else :label="slotProps.data.name" variant="text" />
       </template>
     </Column>
     <Column field="type" header="Type"></Column>
     <Column field="lastModify" header="Last Modify" :sortable="true"></Column>
-    <Column field="permission" header="Permission"></Column>
+    <Column field="permission" header="Permission">
+      <template #body="slotProps">
+        <Chip :label="slotProps.data.permission" />
+      </template>
+    </Column>
   </DataTable>
 </template>
 

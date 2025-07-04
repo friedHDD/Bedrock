@@ -12,7 +12,13 @@ const router = createRouter({
       path: '/files/:path(.*)',
       name: 'files',
       component: () => import('./views/Files.vue'),
-      props:true
+      props: route => ({
+        path: `/${route.params.path}`//add '/' qwq
+      })
+    },
+    {
+      path: '/files',
+      redirect: '/files/~/',
     },
   ],
 })

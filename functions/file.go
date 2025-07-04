@@ -26,14 +26,14 @@ func ListDirectoryHandler(c *gin.Context) {
 		return
 	}
 
-	if strings.HasPrefix(folderPath, "~") {
+	if strings.HasPrefix(folderPath, "/~") {
 		homeDir, err := os.UserHomeDir() // ~ means homedir
 		if err != nil {
 			log.Printf("Error getting user home directory: %v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "could not resolve home directory"})
 			return
 		}
-		folderPath = filepath.Join(homeDir, folderPath[1:]) // generate true path
+		folderPath = filepath.Join(homeDir, folderPath[2:]) // generate true path
 	}
 
 	entries, err := os.ReadDir(folderPath)
