@@ -58,18 +58,14 @@ watch(//events after the path changed
   </div>
 
   <DataTable :value="files" tableStyle="min-width: 50rem">
-
     <Column field="name" header="Name" :sortable="true">
       <template #body="slotProps">
-        <!-- 文件夹 -->
         <router-link :to="getFolderLink(slotProps.data.name)" v-if="slotProps.data.type === 'folder'">
-          <Button :label="slotProps.data.name" severity="secondary" variant="text" />
+          <Button icon="pi pi-folder" :label="slotProps.data.name" severity="secondary" variant="text" />
         </router-link>
-        <!-- 文件 -->
-        <Button v-else :label="slotProps.data.name" variant="text" />
+        <Button v-else icon="pi pi-file" :label="slotProps.data.name" variant="text" />
       </template>
     </Column>
-    <Column field="type" header="Type"></Column>
     <Column field="lastModify" header="Last Modify" :sortable="true"></Column>
     <Column field="permission" header="Permission">
       <template #body="slotProps">
