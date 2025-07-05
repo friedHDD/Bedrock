@@ -29,6 +29,10 @@ func Start() {
 	r.GET("/api/file/details", func(c *gin.Context) {
 		handler.FileDetailHandler(c)
 	})
+
+	r.GET("/api/ipfs/add", func(c *gin.Context) {
+		handler.IPFSAddHandler(c)
+	})
 	log.Printf("Bedrock starting, listening on :9090")
 
 	if err := r.Run(":9090"); err != nil {

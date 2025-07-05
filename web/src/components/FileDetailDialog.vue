@@ -2,17 +2,24 @@
 import { computed,ref,watch } from 'vue';
 import axios from 'axios'
 
-import Dialog from 'primevue/dialog';
-import Button from 'primevue/button';
-import Tabs from 'primevue/tabs';
-import TabList from 'primevue/tablist';
-import Tab from 'primevue/tab';
-import TabPanels from 'primevue/tabpanels';
-import TabPanel from 'primevue/tabpanel';
-import Chip from 'primevue/chip'
+import {Dialog,
+  Button,
+  Tabs,
+  TabList,
+  Tab,
+  TabPanels,
+  TabPanel,
+  Chip,
+  Checkbox,
+  Message,
+  ButtonGroup
+} from "primevue";
 
 const details = ref(null)
 const isLoading = ref(false)
+const isConfirmedIPFS = ref(false);
+const isAddingToIpfs = ref(false);
+const ipfsCid = ref('');
 const props = defineProps({
   visible: {
     type: Boolean,
@@ -42,6 +49,21 @@ const onHide = () => {
   emit('update:visible', false);
 };
 
+async function addToIPFS() {
+  isAddingToIpfs.value = true
+  const fullPath = props.basePath.endsWith('/')
+    ? `${props.basePath}${props.file.name}`
+    : `${props.basePath}/${props.file.name}`;
+  try {
+    const response = await axios.get(`/api/ipfs/add?file=${encodeURIComponent(fullPath)}`);
+    ipfsCid.value = response.data.cid;
+  } catch (error) {
+    ipfsCid.value = error.response?.data?.error || 'An unknown error occurred.';
+  } finally {
+    isAddingToIpfs.value = false;
+  }
+}
+
 watch(() => props.file, async (newFile) => {
   if (newFile && props.visible) {
     isLoading.value = true;
@@ -59,6 +81,7 @@ watch(() => props.file, async (newFile) => {
       isLoading.value = false;
     }
   }
+  ipfsCid.value = null
   console.log(details)
 }, { immediate: true });
 
@@ -71,13 +94,14 @@ watch(() => props.file, async (newFile) => {
     @update:visible="onHide"
     modal
     header="File Details"
-    :style="{ width: '25rem' }"
+    :style="{ width: '30rem' }"
   >
     <div class="card">
       <Tabs value="0">
         <TabList>
           <Tab value="0"><i class="pi pi-file"></i></Tab>
           <Tab value="1"><i class="pi pi-info-circle"></i></Tab>
+          <Tab value="2"><i class="pi pi-box"></i></Tab>
         </TabList>
         <TabPanels>
           <TabPanel value="0">
@@ -86,7 +110,6 @@ watch(() => props.file, async (newFile) => {
                 <span class="pi pi-file" style="font-size: 2rem"></span>
                 <p>{{ props.file.name }}</p>
               </div>
-              <!-- 点击下载按钮后，也关闭弹窗 -->
               <a :href="downloadLink" :download="props.file.name" @click="onHide">
                 <Button icon="pi pi-download" />
               </a>
@@ -101,7 +124,38 @@ watch(() => props.file, async (newFile) => {
               <p><strong>Full Path:</strong> {{ details.truePath }}</p>
             </div>
           </TabPanel>
+          <TabPanel value="2">
+            <div v-if="props.file" class="file-details-content">
+              <Message severity="warn">This will make the file public</Message>
+              <div class="confirmation-section">
+                <Checkbox v-model="isConfirmedIPFS" inputId="ipfs-confirm" binary />
+                <label for="ipfs-confirm" class="ml-2"> I understand.</label>
+              </div>
 
+              <Button
+                label="Add to IPFS"
+                icon="pi pi-upload"
+                :disabled="!isConfirmedIPFS||ipfsCid"
+                :loading="isAddingToIpfs"
+                @click="addToIPFS"
+              />
+              <div v-if="ipfsCid" class="file-details-content">
+                <Chip :label="`cid:${ipfsCid.slice(0, 6)}...${ipfsCid.slice(-6)}`" icon="pi pi-file" />
+                <ButtonGroup>
+                  <Button icon="pi pi-copy" v-clipboard:copy="ipfsCid"/>
+                  <a :href="`http://localhost:8080/ipfs/${ipfsCid}`" target="_blank">
+                    <Button label="localhost" icon="pi pi-arrow-up-right" variant="text"/>
+                  </a>
+                  <a :href="`https://ipfs.io/ipfs/${ipfsCid}`" target="_blank">
+                    <Button label="ipfs.io" icon="pi pi-arrow-up-right" variant="text"/>
+                  </a>
+                </ButtonGroup>
+
+              </div>
+
+
+            </div>
+          </TabPanel>
         </TabPanels>
       </Tabs>
     </div>
