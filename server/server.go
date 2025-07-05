@@ -1,9 +1,7 @@
 package server
 
 import (
-	"flag"
-	"fmt"
-	"github.com/friedHDD/Bedrock/functions"
+	"github.com/friedHDD/Bedrock/handler"
 	"log"
 	"net/http"
 
@@ -11,7 +9,6 @@ import (
 )
 
 func Start() {
-	port := flag.String("port", "9090", "the port for the server to listen on")
 
 	r := gin.Default()
 
@@ -22,13 +19,16 @@ func Start() {
 	})
 
 	r.GET("/api/list", func(c *gin.Context) {
-		functions.ListDirectoryHandler(c)
+		handler.ListDirectoryHandler(c)
 	})
 
-	address := fmt.Sprintf(":%s", *port)
-	log.Printf("Bedrock starting, listening on %s", address)
+	r.GET("/api/download", func(c *gin.Context) {
+		handler.DownloadFileHandler(c)
+	})
 
-	if err := r.Run(address); err != nil {
+	log.Printf("Bedrock starting, listening on :9090")
+
+	if err := r.Run(":9090"); err != nil {
 		log.Fatalf("Failed to run server: %v", err)
 	}
 }

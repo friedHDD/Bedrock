@@ -1,13 +1,12 @@
-package functions
+package handler
 
 import (
 	"fmt"
+	"github.com/friedHDD/Bedrock/utils"
 	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
 	"os"
-	"path/filepath"
-	"strings"
 	"time"
 )
 
@@ -19,21 +18,12 @@ type FileListItem struct {
 }
 
 func ListDirectoryHandler(c *gin.Context) {
-	// folder=
-	folderPath := c.Query("folder")
-	if folderPath == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "folder query parameter is required"})
-		return
-	}
 
-	if strings.HasPrefix(folderPath, "/~") {
-		homeDir, err := os.UserHomeDir() // ~ means homedir
-		if err != nil {
-			log.Printf("Error getting user home directory: %v", err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "could not resolve home directory"})
-			return
-		}
-		folderPath = filepath.Join(homeDir, folderPath[2:]) // generate true path
+	queryFolderPath := c.Query("folder")
+	folderPath, err := utils.ConvertPath(queryFolderPath)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
 	}
 
 	entries, err := os.ReadDir(folderPath)

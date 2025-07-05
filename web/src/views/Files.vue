@@ -25,6 +25,11 @@ const getFolderLink = (fileName) => {
   return `/files${props.path}${fileName}/`
 }
 
+const getDownloadLink = (fileName) => {
+  const fullPath = props.path.endsWith('/') ? `${props.path}${fileName}` : `${props.path}/${fileName}`;
+  return `/api/download?file=${fullPath}`;
+}
+
 const breadcrumbItems = computed(() => {
   const segments = props.path.split('/').filter(Boolean); // 分割并移除空项
   let currentPath = '';
@@ -63,10 +68,16 @@ watch(//events after the path changed
         <router-link :to="getFolderLink(slotProps.data.name)" v-if="slotProps.data.type === 'folder'">
           <Button icon="pi pi-folder" :label="slotProps.data.name" severity="secondary" variant="text" />
         </router-link>
-        <Button v-else icon="pi pi-file" :label="slotProps.data.name" variant="text" />
+        <a :href="getDownloadLink(slotProps.data.name)" :download="slotProps.data.name" v-else>
+          <Button icon="pi pi-file" :label="slotProps.data.name" variant="text" />
+        </a>
       </template>
     </Column>
-    <Column field="lastModify" header="Last Modify" :sortable="true"></Column>
+    <Column field="lastModify" header="Last Modify" :sortable="true">
+      <template #body="slotProps">
+        {{ new Date(slotProps.data.lastModify).toLocaleString() }}
+      </template>
+    </Column>
     <Column field="permission" header="Permission">
       <template #body="slotProps">
         <Chip :label="slotProps.data.permission" />
