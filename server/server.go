@@ -23,9 +23,12 @@ func Start() {
 	})
 
 	r.GET("/api/download", func(c *gin.Context) {
-		handler.DownloadFileHandler(c)
+		handler.DownloadHandler(c)
 	})
 
+	r.GET("/api/file/details", func(c *gin.Context) {
+		handler.FileDetailHandler(c)
+	})
 	log.Printf("Bedrock starting, listening on :9090")
 
 	if err := r.Run(":9090"); err != nil {

@@ -10,12 +10,14 @@ import (
 	"time"
 )
 
-type FileListItem struct {
-	Name       string `json:"name"`
-	Type       string `json:"type"`
-	LastModify string `json:"lastModify"`
-	Permission string `json:"permission"`
-}
+type (
+	FileListItem struct {
+		Name       string `json:"name"`
+		Type       string `json:"type"`
+		LastModify string `json:"lastModify"`
+		Permission string `json:"permission"`
+	}
+)
 
 func ListDirectoryHandler(c *gin.Context) {
 

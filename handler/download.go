@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 )
 
-func DownloadFileHandler(c *gin.Context) {
+func DownloadHandler(c *gin.Context) {
 
 	queryFilePath := c.Query("file")
 	filePath, err := utils.ConvertPath(queryFilePath)

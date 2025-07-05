@@ -8,6 +8,9 @@ import Button from 'primevue/button';
 import Chip from 'primevue/chip';
 import Breadcrumb from 'primevue/breadcrumb';
 
+import FileDetailDialog from '../components/FileDetailDialog.vue';
+
+
 const props = defineProps({
   path: {
     type: String,
@@ -17,17 +20,14 @@ const props = defineProps({
 })
 
 const files = ref([])
+const isDialogVisible = ref(false);
+const selectedFile = ref(null);
 
 const getFolderLink = (fileName) => {
   if (props.path && !props.path.endsWith('/')){
     return `/files${props.path}/${fileName}/`
   }
   return `/files${props.path}${fileName}/`
-}
-
-const getDownloadLink = (fileName) => {
-  const fullPath = props.path.endsWith('/') ? `${props.path}${fileName}` : `${props.path}/${fileName}`;
-  return `/api/download?file=${fullPath}`;
 }
 
 const breadcrumbItems = computed(() => {
@@ -40,6 +40,11 @@ const breadcrumbItems = computed(() => {
     };
   });
 })
+
+const showFileDetails = (file) => {
+  selectedFile.value = file;
+  isDialogVisible.value = true;
+};
 
 watch(//events after the path changed
   () => props.path,
@@ -68,9 +73,7 @@ watch(//events after the path changed
         <router-link :to="getFolderLink(slotProps.data.name)" v-if="slotProps.data.type === 'folder'">
           <Button icon="pi pi-folder" :label="slotProps.data.name" severity="secondary" variant="text" />
         </router-link>
-        <a :href="getDownloadLink(slotProps.data.name)" :download="slotProps.data.name" v-else>
-          <Button icon="pi pi-file" :label="slotProps.data.name" variant="text" />
-        </a>
+          <Button icon="pi pi-file" :label="slotProps.data.name" variant="text" @click="showFileDetails(slotProps.data)" v-else/>
       </template>
     </Column>
     <Column field="lastModify" header="Last Modify" :sortable="true">
@@ -84,6 +87,11 @@ watch(//events after the path changed
       </template>
     </Column>
   </DataTable>
+  <FileDetailDialog
+    v-model:visible="isDialogVisible"
+    :file="selectedFile"
+    :base-path="props.path"
+  />
 </template>
 
 <style scoped>
