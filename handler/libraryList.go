@@ -1,40 +1,37 @@
 package handler
 
 import (
+	"github.com/gin-gonic/gin"
+	"gopkg.in/yaml.v3"
 	"log"
 	"net/http"
 	"os"
-	"path/filepath"
-
-	"github.com/gin-gonic/gin"
-	"gopkg.in/yaml.v3"
 )
 
 type bookData struct {
 	ID       string `json:"id"`
-	FilePath string `json:"filePath"`
+	Series   string `json:"series"`
 	BookName string `json:"bookName"`
 }
 
 func LibraryListHandler(c *gin.Context) {
-	const libraryPath = "./data/library"
-	booksYamlFile := filepath.Join(libraryPath, "books.yaml")
+	libraryYamlFile := "./data/index/library.yaml"
 
 	//read
-	yamlFile, err := os.ReadFile(booksYamlFile)
+	yamlFile, err := os.ReadFile(libraryYamlFile)
 	if err != nil {
 		if os.IsNotExist(err) {
 			c.JSON(http.StatusOK, gin.H{"books": []bookData{}})
 			return
 		}
-		log.Printf("Failed to read %s: %v", booksYamlFile, err)
+		log.Printf("Failed to read %s: %v", libraryYamlFile, err)
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "failed to read library data"})
 		return
 	}
 
 	var libraryData LibraryData
 	if err := yaml.Unmarshal(yamlFile, &libraryData); err != nil {
-		log.Printf("Failed to unmarshal %s: %v", booksYamlFile, err)
+		log.Printf("Failed to unmarshal %s: %v", libraryYamlFile, err)
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "failed to parse library data"})
 		return
 	}
@@ -50,7 +47,7 @@ func LibraryListHandler(c *gin.Context) {
 	for id, book := range libraryData.Books {
 		booksResponse = append(booksResponse, bookData{
 			ID:       id,
-			FilePath: book.FilePath,
+			Series:   book.Series,
 			BookName: book.BookName,
 		})
 	}

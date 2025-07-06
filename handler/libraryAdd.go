@@ -9,13 +9,15 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
 )
 
 // BookInfo md5 is the key
 type BookInfo struct {
-	FilePath string `yaml:"filePath"`
-	BookName string `yaml:"bookName"`
+	OriginPath string `yaml:"originPath"`
+	Series     string `yaml:"series"`
+	BookName   string `yaml:"bookName"`
 }
 
 type LibraryData struct {
@@ -23,28 +25,39 @@ type LibraryData struct {
 }
 
 func LibraryAddHandler(c *gin.Context) {
-	const libraryPath = "./data/library"
-	booksYamlFile := filepath.Join(libraryPath, "books.yaml")
+	bookSeries := "ungrouped"
+	libraryResPath := "./data/res/library"
+	libraryResUngroupedPath := path.Join(libraryResPath, bookSeries)
+	libraryYamlFile := "./data/index/library.yaml"
 
-	err := utils.LibraryInit()
-	if err != nil {
-		log.Print(err)
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "library cannot be initialized"})
+	//init library ungrouped path
+	_err := os.MkdirAll(libraryResUngroupedPath, 0755)
+	if _err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": _err.Error()})
 		return
 	}
 
 	queryFilePath := c.Query("file")
-	filePath, err := utils.ConvertPath(queryFilePath)
+	originPath, err := utils.ConvertPath(queryFilePath)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
 	}
-	filePathMd5 := md5Hash(filePath)
-	bookName := filepath.Base(filePath)
+	bookName := filepath.Base(originPath)
 
-	yamlFile, err := os.ReadFile(booksYamlFile)
+	//copy ebook
+	newPath := path.Join(libraryResUngroupedPath, bookName)
+	err = utils.CopyFile(originPath, newPath)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		return
+	}
+
+	bookMd5Id := md5Hash(bookSeries + "/" + bookName)
+
+	yamlFile, err := os.ReadFile(libraryYamlFile)
 	if err != nil && !os.IsNotExist(err) {
-		log.Printf("Failed to read %s: %v", booksYamlFile, err)
+		log.Printf("Failed to read %s: %v", libraryYamlFile, err)
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "failed to read library data"})
 		return
 	}
@@ -52,7 +65,7 @@ func LibraryAddHandler(c *gin.Context) {
 	var libraryData LibraryData
 	//read data from library
 	if err := yaml.Unmarshal(yamlFile, &libraryData); err != nil {
-		log.Printf("Failed to unmarshal %s: %v", booksYamlFile, err)
+		log.Printf("Failed to unmarshal %s: %v", libraryYamlFile, err)
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "failed to parse library data"})
 		return
 	}
@@ -63,15 +76,16 @@ func LibraryAddHandler(c *gin.Context) {
 	}
 
 	//if this book existed
-	if _, exists := libraryData.Books[filePathMd5]; exists {
+	if _, exists := libraryData.Books[bookMd5Id]; exists {
 		c.JSON(http.StatusConflict, gin.H{"message": "book already existed"})
 		return
 	}
 
 	//add
-	libraryData.Books[filePathMd5] = BookInfo{
-		FilePath: filePath,
-		BookName: bookName,
+	libraryData.Books[bookMd5Id] = BookInfo{
+		OriginPath: originPath,
+		Series:     bookSeries,
+		BookName:   bookName,
 	}
 
 	//pack new data
@@ -84,8 +98,8 @@ func LibraryAddHandler(c *gin.Context) {
 	}
 
 	//write
-	if err := os.WriteFile(booksYamlFile, newYaml, 0644); err != nil {
-		log.Printf("Failed to write to %s: %v", booksYamlFile, err)
+	if err := os.WriteFile(libraryYamlFile, newYaml, 0644); err != nil {
+		log.Printf("Failed to write to %s: %v", libraryYamlFile, err)
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "failed to save new data"})
 		return
 	}

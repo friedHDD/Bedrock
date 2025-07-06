@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"github.com/friedHDD/Bedrock/server"
+	"github.com/friedHDD/Bedrock/utils"
+	"log"
 )
 
 func main() {
@@ -14,6 +16,10 @@ func main() {
 A privacy-first file manager
 ===================
 `)
+	err := utils.InitAll()
+	if err != nil {
+		log.Fatal(err)
+	}
 	server.Start()
 
 }

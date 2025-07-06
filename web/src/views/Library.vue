@@ -62,11 +62,27 @@ const readBook = (book) => {
         </div>
       </template>
 
+      <Column field="Series" header="Series" sortable>
+        <template #body="slotProps">
+          <div>
+            <span>{{ slotProps.data.series }}</span>
+          </div>
+        </template>
+      </Column>
+
       <Column field="bookName" header="Title" sortable>
         <template #body="slotProps">
           <div class="book-title">
             <i class="pi pi-book"></i>
             <span>{{ slotProps.data.bookName }}</span>
+          </div>
+        </template>
+      </Column>
+
+      <Column field="type" header="Type" sortable>
+        <template #body="slotProps">
+          <div class="book-title">
+            <Tag severity="secondary" :value="slotProps.data.bookName.split('.').pop()"></Tag>
           </div>
         </template>
       </Column>
