@@ -64,7 +64,13 @@ async function addToIPFS() {
     const response = await axios.get(`/api/ipfs/add?file=${encodeURIComponent(fullPath.value)}`);
     ipfsCid.value = response.data.cid;
   } catch (error) {
-    ipfsCid.value = error.response?.data?.error || 'An unknown error occurred.';
+    const msg = error.response?.data?.error || 'An unknown error occurred.';
+    await Swal.fire({
+      title: 'IPFS',
+      text: msg,
+      icon: 'error',
+      confirmButtonText: 'close'
+    });
   } finally {
     isAddingToIpfs.value = false;
   }
