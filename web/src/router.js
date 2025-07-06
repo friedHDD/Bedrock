@@ -20,6 +20,11 @@ const router = createRouter({
       path: '/files',
       redirect: '/files/~/',
     },
+    {
+      path: '/library',
+      name: 'library',
+      component: () => import('./views/Library.vue'),
+    },
   ],
 })
 

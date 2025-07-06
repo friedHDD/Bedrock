@@ -1,6 +1,7 @@
 <script setup>
 import { computed,ref,watch } from 'vue';
 import axios from 'axios'
+import Swal from 'sweetalert2'
 
 import {Dialog,
   Button,
@@ -12,7 +13,6 @@ import {Dialog,
   Chip,
   Checkbox,
   Message,
-  ButtonGroup
 } from "primevue";
 
 const details = ref(null)
@@ -37,12 +37,21 @@ const props = defineProps({
 
 const emit = defineEmits(['update:visible']);
 
-const downloadLink = computed(() => {
-  if (!props.file) return '#';
-  const fullPath = props.basePath.endsWith('/')
+const fullPath = computed(() => {
+  if (!props.file) return '';
+  // This logic is now defined in one single place
+  return props.basePath.endsWith('/')
     ? `${props.basePath}${props.file.name}`
     : `${props.basePath}/${props.file.name}`;
-  return `/api/download?file=${encodeURIComponent(fullPath)}`;
+});
+
+const downloadLink = computed(() => {
+  if (!fullPath.value) return '#';
+  return `/api/download?file=${encodeURIComponent(fullPath.value)}`;
+});
+
+const isEbook = computed(() => {
+  return props.file && props.file.name.toLowerCase().endsWith('.epub');
 });
 
 const onHide = () => {
@@ -51,11 +60,8 @@ const onHide = () => {
 
 async function addToIPFS() {
   isAddingToIpfs.value = true
-  const fullPath = props.basePath.endsWith('/')
-    ? `${props.basePath}${props.file.name}`
-    : `${props.basePath}/${props.file.name}`;
   try {
-    const response = await axios.get(`/api/ipfs/add?file=${encodeURIComponent(fullPath)}`);
+    const response = await axios.get(`/api/ipfs/add?file=${encodeURIComponent(fullPath.value)}`);
     ipfsCid.value = response.data.cid;
   } catch (error) {
     ipfsCid.value = error.response?.data?.error || 'An unknown error occurred.';
@@ -64,16 +70,33 @@ async function addToIPFS() {
   }
 }
 
+async function addToLibrary() {
+  if (!props.file) return;
+  try {
+    const response = await axios.get(`/api/library/add?file=${encodeURIComponent(fullPath.value)}`);
+    await Swal.fire({
+      title: 'Library',
+      text: response.data.message,
+      icon: 'success',
+      confirmButtonText: 'Great!'
+    });
+  } catch (error) {
+    const msg = error.response?.data?.message || 'An unknown error occurred.'
+    await Swal.fire({
+      title: 'Library',
+      text: msg,
+      icon: 'error',
+      confirmButtonText: 'close'
+    });
+  }
+}
+
 watch(() => props.file, async (newFile) => {
   if (newFile && props.visible) {
     isLoading.value = true;
     details.value = null;
     try {
-      const fullPath = props.basePath.endsWith('/')
-        ? `${props.basePath}${newFile.name}`
-        : `${props.basePath}/${newFile.name}`;
-
-      const response = await axios.get(`/api/file/details?file=${encodeURIComponent(fullPath)}`);
+      const response = await axios.get(`/api/file/details?file=${encodeURIComponent(fullPath.value)}`);
       details.value = response.data;
     } catch (e) {
       console.error("Failed to fetch file details:", e);
@@ -110,9 +133,11 @@ watch(() => props.file, async (newFile) => {
                 <span class="pi pi-file" style="font-size: 2rem"></span>
                 <p>{{ props.file.name }}</p>
               </div>
-              <a :href="downloadLink" :download="props.file.name" @click="onHide">
-                <Button icon="pi pi-download" />
-              </a>
+                <a :href="downloadLink" :download="props.file.name" @click="onHide" style="text-decoration: none">
+                  <Button icon="pi pi-download" label="Download" />
+                </a>
+                <Button v-if="isEbook" icon="pi pi-book" label="Add to library" @click="addToLibrary"/>
+
             </div>
           </TabPanel>
           <TabPanel value="1">

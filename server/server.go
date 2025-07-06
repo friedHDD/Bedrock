@@ -36,6 +36,14 @@ func Start() {
 		api.GET("/ipfs/add", func(c *gin.Context) {
 			handler.IPFSAddHandler(c)
 		})
+
+		api.GET("/library/add", func(c *gin.Context) {
+			handler.LibraryAddHandler(c)
+		})
+
+		api.GET("/library/list", func(c *gin.Context) {
+			handler.LibraryListHandler(c)
+		})
 	}
 	r.NoRoute(func(c *gin.Context) {
 		indexPath := filepath.Join("./dist", "index.html")
