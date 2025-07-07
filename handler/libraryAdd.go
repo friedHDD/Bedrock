@@ -1,8 +1,6 @@
 package handler
 
 import (
-	"crypto/md5"
-	"encoding/hex"
 	"github.com/friedHDD/Bedrock/utils"
 	"github.com/gin-gonic/gin"
 	"gopkg.in/yaml.v3"
@@ -53,8 +51,9 @@ func LibraryAddHandler(c *gin.Context) {
 		return
 	}
 
-	bookMd5Id := md5Hash(bookSeries + "/" + bookName)
+	bookMd5Id := utils.Md5(bookSeries + "/" + bookName)
 
+	/**start library init**/
 	yamlFile, err := os.ReadFile(libraryYamlFile)
 	if err != nil && !os.IsNotExist(err) {
 		log.Printf("Failed to read %s: %v", libraryYamlFile, err)
@@ -74,6 +73,7 @@ func LibraryAddHandler(c *gin.Context) {
 	if libraryData.Books == nil {
 		libraryData.Books = make(map[string]BookInfo)
 	}
+	/**end library init**/
 
 	//if this book existed
 	if _, exists := libraryData.Books[bookMd5Id]; exists {
@@ -105,10 +105,4 @@ func LibraryAddHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "book added successfully"})
-}
-
-func md5Hash(text string) string {
-	hasher := md5.New()
-	hasher.Write([]byte(text))
-	return hex.EncodeToString(hasher.Sum(nil))
 }

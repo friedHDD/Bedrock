@@ -3,16 +3,20 @@ import {ref, onMounted} from 'vue';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 
-import DataTable from 'primevue/datatable';
-import Column from 'primevue/column';
-import Button from 'primevue/button';
-import Tag from 'primevue/tag';
+import {
+  DataTable,
+  Column,
+  Button,
+  ButtonGroup,
+  Tag,
+} from 'primevue';
 
 const books = ref([]);
-const isLoading = ref(true);
+const isRefreshing = ref(true);
+const isScanning = ref(false);
 
-const fetchBooks = async () => {
-  isLoading.value = true;
+const refresh = async () => {
+  isRefreshing.value = true;
   try {
     const response = await axios.get('/api/library/list');
     books.value = response.data.books || [];
@@ -25,12 +29,37 @@ const fetchBooks = async () => {
       confirmButtonText: 'OK'
     });
   } finally {
-    isLoading.value = false;
+    isRefreshing.value = false;
+  }
+};
+
+const scan = async () => {
+  isScanning.value = true;
+  try {
+    const response = await axios.get('/api/library/scan');
+    const msg = response.data.message || [];
+    await Swal.fire({
+      title: 'Scan completed',
+      text: msg,
+      icon: 'success',
+      confirmButtonText: 'Great!'
+    });
+  } catch (error) {
+    const msg = error.response?.data?.message || 'An unknown error occurred.'
+    await Swal.fire({
+      title: 'Error',
+      text: msg,
+      icon: 'error',
+      confirmButtonText: 'OK'
+    });
+  } finally {
+    isScanning.value = false;
+    await refresh()
   }
 };
 
 onMounted(() => {
-  fetchBooks();
+  refresh();
 });
 
 const readBook = (book) => {
@@ -42,16 +71,19 @@ const readBook = (book) => {
 <template>
   <header class="library-header">
     <h1>Library</h1>
-    <Button icon="pi pi-refresh" label="Refresh" @click="fetchBooks" :loading="isLoading"/>
+    <ButtonGroup>
+      <Button icon="pi pi-refresh" label="Refresh" @click="refresh" :loading="isRefreshing"/>
+      <Button icon="pi pi-wrench" label="Scan" @click="scan" :loading="isScanning"/>
+    </ButtonGroup>
   </header>
 
   <div class="card">
     <DataTable
       :value="books"
-      :loading="isLoading"
+      :loading="isRefreshing"
       paginator
       :rows="10"
-      :rowsPerPageOptions="[5, 10, 20, 50]"
+      :rowsPerPageOptions="[5, 10, 50, 100, 200]"
       tableStyle="min-width: 50rem"
       dataKey="id"
     >
@@ -62,13 +94,7 @@ const readBook = (book) => {
         </div>
       </template>
 
-      <Column field="Series" header="Series" sortable>
-        <template #body="slotProps">
-          <div>
-            <span>{{ slotProps.data.series }}</span>
-          </div>
-        </template>
-      </Column>
+      <Column field="series" header="Series" sortable/>
 
       <Column field="bookName" header="Title" sortable>
         <template #body="slotProps">
@@ -134,6 +160,5 @@ const readBook = (book) => {
   justify-content: center;
   padding: 3rem;
   gap: 1rem;
-  color: var(--p-text-muted-color);
 }
 </style>
