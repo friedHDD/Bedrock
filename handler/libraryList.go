@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"github.com/friedHDD/Bedrock/core/library"
 	"github.com/gin-gonic/gin"
 	"gopkg.in/yaml.v3"
 	"log"
@@ -29,7 +30,7 @@ func LibraryListHandler(c *gin.Context) {
 		return
 	}
 
-	var libraryData LibraryData
+	var libraryData library.Data
 	if err := yaml.Unmarshal(yamlFile, &libraryData); err != nil {
 		log.Printf("Failed to unmarshal %s: %v", libraryYamlFile, err)
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "failed to parse library data"})
