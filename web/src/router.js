@@ -25,6 +25,12 @@ const router = createRouter({
       name: 'library',
       component: () => import('./views/Library.vue'),
     },
+    {
+      path: '/library/:id',
+      name: 'library-reader',
+      component: () => import('./views/LibraryReader.vue'),
+      props: true
+    },
   ],
 })
 

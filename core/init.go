@@ -1,4 +1,4 @@
-package utils
+package core
 
 import (
 	"fmt"
@@ -8,7 +8,7 @@ import (
 
 func InitAll() error {
 	const basePath = "./data"
-	folderList := []string{"index", "res/library", "res/music"}
+	folderList := []string{"index", "log", "res/library", "res/music"}
 	for _, folder := range folderList {
 		if err := os.MkdirAll(filepath.Join(basePath, folder), 0755); err != nil {
 			return fmt.Errorf("failed to create %s: %v", folder, err)

@@ -2,6 +2,7 @@
 import {ref, onMounted} from 'vue';
 import axios from 'axios';
 import Swal from 'sweetalert2';
+import router from "@/router.js";
 
 import {
   DataTable,
@@ -11,9 +12,11 @@ import {
   Tag,
 } from 'primevue';
 
+
 const books = ref([]);
 const isRefreshing = ref(true);
 const isScanning = ref(false);
+const isCleaning = ref(false);
 
 const refresh = async () => {
   isRefreshing.value = true;
@@ -58,14 +61,41 @@ const scan = async () => {
   }
 };
 
+const clean = async () => {
+  isCleaning.value = true;
+  try {
+    const response = await axios.get('/api/library/clean');
+    const msg = response.data.message || [];
+    await Swal.fire({
+      title: 'Accepted',
+      text: msg,
+      icon: 'success',
+      confirmButtonText: 'Great!'
+    });
+  } catch (error) {
+    const msg = error.response?.data?.message || 'An unknown error occurred.'
+    await Swal.fire({
+      title: 'Error',
+      text: msg,
+      icon: 'error',
+      confirmButtonText: 'OK'
+    });
+  } finally {
+    isCleaning.value = false;
+    await refresh()
+  }
+
+};
+
 onMounted(() => {
   refresh();
 });
 
 const readBook = (book) => {
-  console.log('Reading book:', book.id);
-  Swal.fire('Coming Soon!', `${book.id}`, 'info');
+  router.push(`/library/${book.id}`)
+  //window.open(`/library/${book.id}`, '_blank');
 };
+
 </script>
 
 <template>
@@ -74,6 +104,7 @@ const readBook = (book) => {
     <ButtonGroup>
       <Button icon="pi pi-refresh" label="Refresh" @click="refresh" :loading="isRefreshing"/>
       <Button icon="pi pi-wrench" label="Scan" @click="scan" :loading="isScanning"/>
+      <Button icon="pi pi-eraser" label="Clean" @click="clean" :loading="isCleaning"/>
     </ButtonGroup>
   </header>
 

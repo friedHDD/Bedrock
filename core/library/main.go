@@ -1,6 +1,8 @@
 package library
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"fmt"
 	"gopkg.in/yaml.v3"
 	"os"
@@ -16,6 +18,12 @@ type BookInfo struct {
 type Data struct {
 	//string as index, BookInfo as value
 	Books map[string]BookInfo `yaml:"books"`
+}
+
+func Md5(text string) string {
+	hasher := md5.New()
+	hasher.Write([]byte(text))
+	return hex.EncodeToString(hasher.Sum(nil))
 }
 
 // return error and how many books have been added

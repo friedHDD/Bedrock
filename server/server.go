@@ -48,6 +48,14 @@ func Start() {
 		api.GET("/library/scan", func(c *gin.Context) {
 			handler.LibraryScanHandler(c)
 		})
+
+		api.GET("/library/clean", func(c *gin.Context) {
+			handler.LibraryCleanHandler(c)
+		})
+
+		api.GET("/library/get/:id", func(c *gin.Context) {
+			handler.LibraryGetHandler(c)
+		})
 	}
 	r.NoRoute(func(c *gin.Context) {
 		indexPath := filepath.Join("./dist", "index.html")

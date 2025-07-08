@@ -39,7 +39,7 @@ func LibraryAddHandler(c *gin.Context) {
 		return
 	}
 
-	bookMd5Id := utils.Md5(bookSeries + "/" + bookName)
+	bookMd5Id := library.Md5(bookSeries + "/" + bookName)
 
 	bookToAdd := make(map[string]library.BookInfo)
 	bookToAdd[bookMd5Id] = library.BookInfo{
